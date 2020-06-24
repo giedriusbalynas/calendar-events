@@ -3,14 +3,15 @@ import VueRouter from 'vue-router';
 import App from './App.vue'
 import Home from './components/Home';
 import vuetify from './plugins/vuetify';
+import Events from './components/Events';
 
 Vue.config.productionTip = false;
 
 Vue.use(VueRouter);
 
 const routes = [
-  {path: '/', component: Home},
-  // {path: '/', component: ""}
+  {path: '/events', component: Events, name: 'events', props: true},
+  {path: '/', component: Home, props: true}
 ];
 
 const router = new VueRouter({
