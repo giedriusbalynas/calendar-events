@@ -1,80 +1,92 @@
 <template>
     <div>
-        <button v-if='authorized' @click="getData">Get Data</button>
-        <div class="item-container" v-if="authorized && items">
-            <ul>
-                <li v-for="item in items" v-bind:key="item.id">{{item.summary}}</li>
-            </ul>
+        <div v-if='authorized'>
+            <div class="d-flex justify-center my-10">
+                <v-btn @click="getData" color="primary">Refresh</v-btn>
+                <v-btn @click="handleSignoutClick" class="ml-3" color="error">Sign Out</v-btn>
+            </div>
+            <div class="item-container" v-if="items.length > 0">
+                <v-card v-for="item in items" v-bind:key="item.id" class="mx-auto my-3" max-width="80%" tile>
+                    <v-list-item>
+                        <v-list-item-content>
+                            <v-list-item-title>{{item.summary}}</v-list-item-title>
+                        </v-list-item-content>
+                    </v-list-item>
+                </v-card>
+            </div>
+            <div v-else>
+                <v-card class="mx-auto my-4 py-3 px-4" max-width="80%" tile>
+                    There is no events today.
+                </v-card>
+            </div>
+        </div>
+        <div v-else class="text-center my-10">
+            <h2>You must be singed in to reach this path!</h2>
+            <router-link to="/" class="">Go home to sign in</router-link>
         </div>
     </div>
 </template>
 
 <script>
-    /*global gapi*/
-    // import axios from 'axios';
+    import axios from 'axios';
+    import {handleClientLoad} from '../util';
 
     export default {
         name: 'Events',
 
         data() {
             return {
-                items: undefined,
-                api: undefined,
-                authorized: false
+                items: [],
+                authorized: false,
+                token: null
             }
         },
 
         props: ['auth'],
 
-            created() {
-                this.authorized = JSON.parse(this.auth);
-                this.api = gapi;
-            //     axios
-            //         .get('https://apis.google.com/js/api.js')
-            //         .then(response => console.log(response))
-            //     console.log(this.authorized);
-            },
+        mounted() {
+            this.token = localStorage.getItem('token');
+
+            if (this.token) {
+                this.authorized = true;
+            }
+            handleClientLoad();
+            this.getData();
+        },
 
         methods: {
             getData() {
-                let vm = this;
-                console.log(vm);
+                let config = {
+                    headers: {
+                        authorization: 'Bearer ' + this.token
+                    }
+                };
 
-                vm.api.client.calendar.events.list({
-                    'calendarId': 'primary',
-                    'timeMin': new Date(new Date().setHours(0, 0, 0, 0)).toISOString(),
-                    'timeMax': new Date(new Date().setHours(23, 59, 59, 999)).toISOString(),
-                    'showDeleted': false,
-                    'singleEvents': true,
-                    'maxResults': 10,
-                    'orderBy': 'startTime'
-                }).then(response => {
-                    // vm.items = this.syntaxHighlight(response.result.items);
-                    vm.items = response.result.items;
-                    console.log(vm.items);
-                });
+                const encodeGetParams = p =>
+                    Object.entries(p).map(kv => kv.map(encodeURIComponent).join("=")).join("&");
+
+                const params = {
+                    timeMax: new Date(new Date().setHours(23, 59, 59, 999)).toISOString(),
+                    maxResults: 10,
+                    showDeleted: false,
+                    timeMin: new Date(new Date().setHours(0, 0, 0, 0)).toISOString(),
+                    orderBy: 'startTime',
+                    singleEvents: true,
+                };
+
+                axios.get('https://www.googleapis.com/calendar/v3/calendars/primary/events?' + encodeGetParams(params), config)
+                    .then(response => {
+                        this.items = response.data.items;
+                    });
             },
 
-            syntaxHighlight(json) {
-                if (typeof json != 'string') {
-                    json = JSON.stringify(json, undefined, 2);
-                }
-                json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, match => {
-                    let cls = 'number';
-                    if (/^"/.test(match)) {
-                        if (/:$/.test(match)) {
-                            cls = 'key';
-                        } else {
-                            cls = 'string';
-                        }
-                    } else if (/true|false/.test(match)) {
-                        cls = 'boolean';
-                    } else if (/null/.test(match)) {
-                        cls = 'null';
-                    }
-                    return '<span class="' + cls + '">' + match + '</span>';
-                });
+            handleSignoutClick() {
+                Promise.resolve(window.gapi.auth2.getAuthInstance().signOut())
+                    .then(() => {
+                        this.authorized = false;
+                        localStorage.clear();
+                        this.$router.push('/')
+                    });
             }
         }
     }
