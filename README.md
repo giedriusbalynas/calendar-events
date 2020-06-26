@@ -1,24 +1,17 @@
-# calendar-events
+# Calendar events app
 
-## Project setup
-```
-npm install
-```
+This application lists the names of today's google calendar events. 
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+App is deployed to firebase server: https://calendar-events-281211.firebaseapp.com/. In order to use this app you will have to **sign in to your google account**.
+Make sure you have some events in your google calendar or you can add them after log in and press refresh button in the app.
 
-### Compiles and minifies for production
-```
-npm run build
-```
+**Note:** This app is not verified by google, because it's for learning purposes only. 
 
-### Lints and fixes files
-```
-npm run lint
-```
+When you get the app isn't verified window on log in, press **Show Advanced >> Go to calendar-events-281211.firebaseapp.com (unsafe)**.
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## Using app localy
+ 1. Clone repository
+ 2. Navigate to repository folder via terminal
+ 3. Type npm install to install dependancies
+ 4. Type npm run serve
+ 5. Navigate to http://localhost:8080 in your browser.
